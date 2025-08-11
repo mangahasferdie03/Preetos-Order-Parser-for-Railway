@@ -279,13 +279,17 @@ Just paste your orders and let me handle the rest! 🚀
         total = subtotal
         if parsed_order.get('shipping_fee'):
             shipping_fee = parsed_order['shipping_fee']
-            breakdown_lines.append(f"Shipping Fee : ₱{shipping_fee}")
+            breakdown_lines.append(f"Shipping Fee: ₱{shipping_fee}")
             total += shipping_fee
         
         # Add discount if present
         if parsed_order.get('discount_amount'):
             discount_amount = parsed_order['discount_amount']
-            breakdown_lines.append(f"Discount : -₱{discount_amount}")
+            if parsed_order.get('discount_percentage'):
+                discount_percentage = parsed_order['discount_percentage']
+                breakdown_lines.append(f"Discount ({discount_percentage}%): -₱{discount_amount}")
+            else:
+                breakdown_lines.append(f"Discount: -₱{discount_amount}")
             total -= discount_amount
         
         # Add separator and final total
@@ -322,13 +326,17 @@ Just paste your orders and let me handle the rest! 🚀
         total = subtotal
         if parsed_order.get('shipping_fee'):
             shipping_fee = parsed_order['shipping_fee']
-            breakdown_lines.append(f"Shipping Fee : ₱{shipping_fee}")
+            breakdown_lines.append(f"Shipping Fee: ₱{shipping_fee}")
             total += shipping_fee
         
         # Add discount if present
         if parsed_order.get('discount_amount'):
             discount_amount = parsed_order['discount_amount']
-            breakdown_lines.append(f"Discount : -₱{discount_amount}")
+            if parsed_order.get('discount_percentage'):
+                discount_percentage = parsed_order['discount_percentage']
+                breakdown_lines.append(f"Discount ({discount_percentage}%): -₱{discount_amount}")
+            else:
+                breakdown_lines.append(f"Discount: -₱{discount_amount}")
             total -= discount_amount
         
         # Add separator and final total
