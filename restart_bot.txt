@@ -1,0 +1,1 @@
+cd "C:\Users\My PC\Desktop\Ferdie\T Bot Projects\Order Parser" && wmic process where "name='python.exe'" delete && python main.py
