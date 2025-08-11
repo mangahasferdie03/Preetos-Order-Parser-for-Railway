@@ -1,0 +1,8 @@
+[build]
+builder = "heroku/python"
+
+[deploy]
+startCommand = "python main.py"
+
+[env]
+PYTHONUNBUFFERED = "1"
