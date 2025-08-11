@@ -147,9 +147,14 @@ Just paste your orders and let me handle the rest! 🚀
         if parsed_order.get('customer_name'):
             summary_lines.append(f"**Customer:** {parsed_order['customer_name']}")
         
-        # Payment method
+        # Payment method and status
+        payment_info = []
         if parsed_order.get('payment_method'):
-            summary_lines.append(f"**Payment:** {parsed_order['payment_method']}")
+            payment_info.append(parsed_order['payment_method'])
+        if parsed_order.get('payment_status'):
+            payment_info.append(f"({parsed_order['payment_status']})")
+        if payment_info:
+            summary_lines.append(f"**Payment:** {' '.join(payment_info)}")
         
         # Location
         if parsed_order.get('customer_location'):
@@ -218,9 +223,14 @@ Just paste your orders and let me handle the rest! 🚀
         if parsed_order.get('customer_name'):
             summary_lines.append(f"**Customer:** {parsed_order['customer_name']}")
         
-        # Payment method
+        # Payment method and status
+        payment_info = []
         if parsed_order.get('payment_method'):
-            summary_lines.append(f"**Payment:** {parsed_order['payment_method']}")
+            payment_info.append(parsed_order['payment_method'])
+        if parsed_order.get('payment_status'):
+            payment_info.append(f"({parsed_order['payment_status']})")
+        if payment_info:
+            summary_lines.append(f"**Payment:** {' '.join(payment_info)}")
         
         # Location
         if parsed_order.get('customer_location'):
