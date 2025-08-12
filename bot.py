@@ -176,8 +176,10 @@ Just paste your orders and let me handle the rest! 🚀
             summary_lines.append(f"**Shipping:** ₱{parsed_order['shipping_fee']}")
         
         # Discount
-        if parsed_order.get('discount_percentage') and parsed_order.get('discount_amount'):
-            summary_lines.append(f"**Discount:** {parsed_order['discount_percentage']}% (₱{parsed_order['discount_amount']})")
+        if parsed_order.get('discount_percentage'):
+            summary_lines.append(f"**Discount ({parsed_order['discount_percentage']}%):** ₱{parsed_order['discount_amount']}")
+        elif parsed_order.get('discount_amount'):
+            summary_lines.append(f"**Discount:** ₱{parsed_order['discount_amount']} off")
         
         # Final total
         summary_lines.append("")
@@ -252,8 +254,10 @@ Just paste your orders and let me handle the rest! 🚀
             summary_lines.append(f"**Shipping:** ₱{parsed_order['shipping_fee']}")
         
         # Discount
-        if parsed_order.get('discount_percentage') and parsed_order.get('discount_amount'):
-            summary_lines.append(f"**Discount:** {parsed_order['discount_percentage']}% (₱{parsed_order['discount_amount']})")
+        if parsed_order.get('discount_percentage'):
+            summary_lines.append(f"**Discount ({parsed_order['discount_percentage']}%):** ₱{parsed_order['discount_amount']}")
+        elif parsed_order.get('discount_amount'):
+            summary_lines.append(f"**Discount:** ₱{parsed_order['discount_amount']} off")
         
         # Final total
         summary_lines.append("")
