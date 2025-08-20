@@ -157,8 +157,8 @@ Just paste your orders and let me handle the rest! 🚀
             summary_lines.append(f"**Payment:** {' '.join(payment_info)}")
         
         # Location
-        if parsed_order.get('customer_location'):
-            summary_lines.append(f"**Location:** {parsed_order['customer_location']}")
+        location = parsed_order.get('customer_location', '')
+        summary_lines.append(f"**Location:** {location}")
         
         # Items
         if parsed_order.get('items'):
@@ -181,8 +181,12 @@ Just paste your orders and let me handle the rest! 🚀
         elif parsed_order.get('discount_amount'):
             summary_lines.append(f"**Discount:** ₱{parsed_order['discount_amount']} off")
         
-        # Final total
+        # Payment status
         summary_lines.append("")
+        status = parsed_order.get('payment_status', 'Unpaid')
+        summary_lines.append(f"**Status:** {status}")
+        
+        # Final total
         summary_lines.append(f"**Final Total:** ₱{final_total}")
         
         message_text = "\n".join(summary_lines)
@@ -235,8 +239,8 @@ Just paste your orders and let me handle the rest! 🚀
             summary_lines.append(f"**Payment:** {' '.join(payment_info)}")
         
         # Location
-        if parsed_order.get('customer_location'):
-            summary_lines.append(f"**Location:** {parsed_order['customer_location']}")
+        location = parsed_order.get('customer_location', '')
+        summary_lines.append(f"**Location:** {location}")
         
         # Items
         if parsed_order.get('items'):
@@ -259,8 +263,12 @@ Just paste your orders and let me handle the rest! 🚀
         elif parsed_order.get('discount_amount'):
             summary_lines.append(f"**Discount:** ₱{parsed_order['discount_amount']} off")
         
-        # Final total
+        # Payment status
         summary_lines.append("")
+        status = parsed_order.get('payment_status', 'Unpaid')
+        summary_lines.append(f"**Status:** {status}")
+        
+        # Final total
         summary_lines.append(f"**Final Total:** ₱{final_total}")
         
         message_text = "\n".join(summary_lines)
@@ -287,7 +295,7 @@ Just paste your orders and let me handle the rest! 🚀
                 subtotal += line_total
                 
                 # Format: "Pouch Cheese - 1 - ₱150"
-                breakdown_lines.append(f"{size} {name} - {quantity} - ₱{price}")
+                breakdown_lines.append(f"{size} {name} - {quantity} - ₱{line_total}")
         
         # Add shipping fee if present
         total = subtotal
@@ -334,7 +342,7 @@ Just paste your orders and let me handle the rest! 🚀
                 subtotal += line_total
                 
                 # Format: "Pouch Cheese - 1 - ₱150"
-                breakdown_lines.append(f"{size} {name} - {quantity} - ₱{price}")
+                breakdown_lines.append(f"{size} {name} - {quantity} - ₱{line_total}")
         
         # Add shipping fee if present
         total = subtotal
