@@ -169,7 +169,9 @@ Just paste your orders and let me handle the rest! 🚀
                 product_info = self.products.get(product_code, {})
                 size = product_info.get('size', 'Unknown')
                 name = product_info.get('name', product_code)
-                summary_lines.append(f"  • {quantity}x {size} {name}")
+                price = product_info.get('price', 0)
+                line_total = quantity * price
+                summary_lines.append(f"  • {size} {name} - {quantity} - ₱{line_total}")
         
         # Shipping fee
         if parsed_order.get('shipping_fee'):
@@ -251,7 +253,9 @@ Just paste your orders and let me handle the rest! 🚀
                 product_info = self.products.get(product_code, {})
                 size = product_info.get('size', 'Unknown')
                 name = product_info.get('name', product_code)
-                summary_lines.append(f"  • {quantity}x {size} {name}")
+                price = product_info.get('price', 0)
+                line_total = quantity * price
+                summary_lines.append(f"  • {size} {name} - {quantity} - ₱{line_total}")
         
         # Shipping fee
         if parsed_order.get('shipping_fee'):
