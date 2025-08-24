@@ -83,12 +83,32 @@ PARSING RULES:
 - customer_name: extract name, title case
 - payment_method: "Gcash"|"BPI"|"Maya"|"Cash"|"BDO"|"Others"|null
 - customer_location: "Quezon City" (from QC/quezon city) | "Paranaque" | null  
-- discount_percentage: number (interpret all discounts as %), null if none
-- discount_amount: calculate from subtotal if percentage given, null otherwise
+- payment_status: "Paid" if payment confirmed, "Unpaid" if not mentioned
+- discount_percentage: number (%), null if discount is peso amount or none
+- discount_amount: number (pesos), null if discount is percentage or none
 - shipping_fee: extract peso amount from "sf/shipping/delivery/padala/hatid [number]"
 - items: array of {{"product_code": string, "quantity": number}}
 - confidence: 0-1 score
-- notes: brief parsing explanation
+- notes: extract additional information not in other fields (contact details, pickup/delivery dates with specific dates in Philippine timezone, special instructions, timing requests, etc.) or null if none
+
+PAYMENT STATUS DETECTION:
+- "paid", "bayad na", "nabayad na", "settled", "payment done", "paid already" → "Paid"
+- "paid via gcash", "paid gcash", "gcash paid", "transferred already" → "Paid"  
+- "payment received", "received payment", "confirmed payment" → "Paid"
+- "paid cash", "cash paid", "transferred", "sent payment" → "Paid"
+- If no payment status mentioned → "Unpaid" (default)
+
+NOTES EXTRACTION:
+- Extract contact details (phone numbers, alternative contacts)
+- Convert relative dates to specific dates using Philippine timezone (Asia/Manila)
+- Today's reference date: August 24, 2025 (Saturday)
+- Examples: "pickup next week Monday" → "Pickup: Monday, August 26, 2025"
+- Examples: "needed tomorrow" → "Needed by: Sunday, August 25, 2025"  
+- Examples: "deliver Friday" → "Deliver: Friday, August 29, 2025" (this Friday)
+- Examples: "deliver next Friday" → "Deliver: Friday, August 29, 2025"
+- Calculate dates relative to Saturday, August 24, 2025
+- Include delivery instructions, special requests, timing requirements
+- If no additional information found, set notes to null
 
 MODIFICATIONS (chronological order):
 - Process add/remove/replace commands step by step
@@ -105,12 +125,13 @@ Return only valid JSON matching this schema:
   "customer_name": string|null,
   "payment_method": string|null,
   "customer_location": string|null,
+  "payment_status": "Paid"|"Unpaid",
   "discount_percentage": number|null,
   "discount_amount": number|null,
   "shipping_fee": number|null,
   "items": [{{"product_code": string, "quantity": number}}],
   "confidence": number,
-  "notes": string
+  "notes": string|null
 }}"""
 
         response = self.anthropic_client.messages.create(
@@ -131,12 +152,13 @@ Return only valid JSON matching this schema:
             "customer_name": None,
             "payment_method": None,
             "customer_location": None,
+            "payment_status": "Unpaid",
             "discount_percentage": None,
             "discount_amount": None,
             "shipping_fee": None,
             "items": [],
             "confidence": 0.7,
-            "notes": "Parsed using regex fallback"
+            "notes": None
         }
         
         lines = [line.strip() for line in message.split('\n') if line.strip()]
@@ -161,6 +183,14 @@ Return only valid JSON matching this schema:
             elif 'bdo' in line_lower:
                 result["payment_method"] = "BDO"
             
+            # Extract payment status
+            payment_status_keywords = ['paid', 'bayad na', 'nabayad na', 'settled', 'payment done', 
+                                     'paid already', 'paid via', 'transferred already', 'payment received', 
+                                     'received payment', 'confirmed payment', 'paid cash', 'cash paid', 
+                                     'transferred', 'sent payment']
+            if any(keyword in line_lower for keyword in payment_status_keywords):
+                result["payment_status"] = "Paid"
+            
             # Extract location
             if any(loc in line_lower for loc in ['qc', 'quezon city', 'quezon']):
                 result["customer_location"] = "Quezon City"
@@ -172,17 +202,23 @@ Return only valid JSON matching this schema:
             if sf_match:
                 result["shipping_fee"] = int(sf_match.group(1))
             
-            # Extract discount
-            discount_match = re.search(r'(?:discount|off|bawas).*?(\d+)', line_lower)
-            if discount_match:
-                result["discount_percentage"] = float(discount_match.group(1))
+            # Extract discount - check for peso amounts vs percentages
+            # Look for peso amounts first (e.g., "10 pesos off", "discount 50 pesos")
+            peso_discount_match = re.search(r'(?:discount|off|bawas).*?(\d+)(?:\s*(?:pesos?|php|₱))', line_lower)
+            if peso_discount_match:
+                result["discount_amount"] = int(peso_discount_match.group(1))
+            else:
+                # Look for percentage discounts (e.g., "5% off", "discount 10")
+                discount_match = re.search(r'(?:discount|off|bawas).*?(\d+)(?:%)?', line_lower)
+                if discount_match:
+                    result["discount_percentage"] = float(discount_match.group(1))
             
             # Extract items
             items = self._extract_items_regex(line)
             result["items"].extend(items)
         
-        # Calculate discount amount
-        if result["discount_percentage"] and result["items"]:
+        # Calculate discount amount only if percentage is given but amount is not
+        if result["discount_percentage"] and not result["discount_amount"] and result["items"]:
             subtotal = sum(self.products[item["product_code"]]["price"] * item["quantity"] 
                           for item in result["items"])
             result["discount_amount"] = int(subtotal * (result["discount_percentage"] / 100))
@@ -244,6 +280,12 @@ Return only valid JSON matching this schema:
             subtotal = sum(self.products[item["product_code"]]["price"] * item["quantity"] 
                           for item in result["items"] if item["product_code"] in self.products)
             result["discount_amount"] = int(subtotal * (result["discount_percentage"] / 100))
+        
+        # Clear percentage if peso amount is given (they're mutually exclusive)
+        if result.get("discount_amount") and result.get("discount_percentage"):
+            # If both are set, prioritize peso amount and clear percentage
+            if not (result.get("discount_percentage") and not result.get("discount_amount")):
+                result["discount_percentage"] = None
         
         # Validate product codes
         valid_items = []

@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+import pytz
 from typing import Dict, List, Optional, Any
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
@@ -114,12 +115,23 @@ class GoogleSheetsClient:
             # Prepare the updates dictionary
             updates = {}
             
-            # Set app-controlled fields
-            current_time = datetime.now()
-            updates[self.column_mapping['order_date']] = current_time.strftime('%Y-%m-%d')
-            updates[self.column_mapping['payment_status']] = 'Unpaid'
+            # Set app-controlled fields with Philippine timezone
+            ph_timezone = pytz.timezone('Asia/Manila')
+            current_time = datetime.now(ph_timezone)
+            formatted_date = current_time.strftime('%m/%d/%Y')
+            print(f"DEBUG: Raw datetime: {current_time}")
+            print(f"DEBUG: Formatted date for column C: {formatted_date}")
+            updates[self.column_mapping['order_date']] = formatted_date
+            
+            # Set payment status based on parsed result, default to Unpaid
+            payment_status = parsed_order.get('payment_status', 'Unpaid')
+            updates[self.column_mapping['payment_status']] = payment_status
+            
             updates[self.column_mapping['order_type']] = 'Reserved'
-            updates[self.column_mapping['notes']] = f"🤖 {current_time.strftime('%I:%M %p')}"
+            
+            # Use parsed notes if available, otherwise leave empty
+            if parsed_order.get('notes'):
+                updates[self.column_mapping['notes']] = parsed_order['notes']
             
             # Set customer name
             if parsed_order.get('customer_name'):
@@ -151,8 +163,10 @@ class GoogleSheetsClient:
                 updates[self.column_mapping['discount_amount']] = parsed_order['discount_amount']
             
             # Prepare batch update
+            print(f"DEBUG: Updates dictionary: {updates}")
             requests = []
             for column, value in updates.items():
+                print(f"DEBUG: Setting {worksheet_name}!{column}{target_row} = {value} (type: {type(value)})")
                 requests.append({
                     'range': f"{worksheet_name}!{column}{target_row}",
                     'values': [[value]]
