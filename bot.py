@@ -191,6 +191,11 @@ Just paste your orders and let me handle the rest! 🚀
         # Final total
         summary_lines.append(f"**Final Total:** ₱{final_total}")
         
+        # Notes
+        if parsed_order.get('notes'):
+            summary_lines.append("")
+            summary_lines.append(f"**Notes:** {parsed_order['notes']}")
+        
         message_text = "\n".join(summary_lines)
         
         # Create inline keyboard with Confirm/Cancel buttons
@@ -274,6 +279,11 @@ Just paste your orders and let me handle the rest! 🚀
         
         # Final total
         summary_lines.append(f"**Final Total:** ₱{final_total}")
+        
+        # Notes
+        if parsed_order.get('notes'):
+            summary_lines.append("")
+            summary_lines.append(f"**Notes:** {parsed_order['notes']}")
         
         message_text = "\n".join(summary_lines)
         
