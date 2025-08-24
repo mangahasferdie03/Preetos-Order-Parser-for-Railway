@@ -62,6 +62,15 @@ class OrderParser:
     def _parse_with_claude(self, message: str) -> Dict[str, Any]:
         """Parse using Claude AI with detailed prompt"""
         
+        # Get current Philippine time for dynamic date reference
+        from zoneinfo import ZoneInfo
+        from datetime import datetime
+        
+        ph_timezone = ZoneInfo('Asia/Manila')
+        current_time = datetime.now(ph_timezone)
+        current_date_str = current_time.strftime('%B %d, %Y')
+        current_day_str = current_time.strftime('%A')
+        
         prompt = f"""Parse this order message into valid JSON only (no extra text). Follow these exact rules:
 
 PRODUCT CATALOG:
@@ -101,12 +110,11 @@ PAYMENT STATUS DETECTION:
 NOTES EXTRACTION:
 - Extract contact details (phone numbers, alternative contacts)
 - Convert relative dates to specific dates using Philippine timezone (Asia/Manila)
-- Today's reference date: August 24, 2025 (Saturday)
-- Examples: "pickup next week Monday" → "Pickup: Monday, August 26, 2025"
-- Examples: "needed tomorrow" → "Needed by: Sunday, August 25, 2025"  
-- Examples: "deliver Friday" → "Deliver: Friday, August 29, 2025" (this Friday)
-- Examples: "deliver next Friday" → "Deliver: Friday, August 29, 2025"
-- Calculate dates relative to Saturday, August 24, 2025
+- Today's reference date: {current_date_str} ({current_day_str})
+- Calculate dates relative to {current_day_str}, {current_date_str}
+- Examples: "pickup tomorrow" should be calculated as the day after {current_day_str}
+- Examples: "deliver Friday" means the next occurring Friday from {current_day_str}
+- Examples: "needed next week" means the following week from {current_date_str}
 - Include delivery instructions, special requests, timing requirements
 - If no additional information found, set notes to null
 
