@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-import pytz
+from zoneinfo import ZoneInfo
 from typing import Dict, List, Optional, Any
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
@@ -116,7 +116,7 @@ class GoogleSheetsClient:
             updates = {}
             
             # Set app-controlled fields with Philippine timezone
-            ph_timezone = pytz.timezone('Asia/Manila')
+            ph_timezone = ZoneInfo('Asia/Manila')
             current_time = datetime.now(ph_timezone)
             formatted_date = current_time.strftime('%m/%d/%Y')
             print(f"DEBUG: Raw datetime: {current_time}")
