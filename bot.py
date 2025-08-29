@@ -19,7 +19,7 @@ class OrderBot:
             '2L-CHZ': {'name': 'Cheese', 'size': 'Tub', 'price': 290},
             '2L-SC': {'name': 'Sour Cream', 'size': 'Tub', 'price': 290},
             '2L-BBQ': {'name': 'BBQ', 'size': 'Tub', 'price': 290},
-            '2L-OG': {'name': 'Original Spice Blend', 'size': 'Tub', 'price': 290}
+            '2L-OG': {'name': 'Original Blend', 'size': 'Tub', 'price': 290}
         }
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
