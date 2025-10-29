@@ -143,12 +143,22 @@ Return only valid JSON matching this schema:
 }}"""
 
         response = self.anthropic_client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}]
         )
         
         json_text = response.content[0].text.strip()
+
+        # Remove markdown code blocks if present
+        if json_text.startswith('```json'):
+            json_text = json_text[7:]  # Remove ```json
+        if json_text.startswith('```'):
+            json_text = json_text[3:]   # Remove ```
+        if json_text.endswith('```'):
+            json_text = json_text[:-3]  # Remove trailing ```
+
+        json_text = json_text.strip()
         result = json.loads(json_text)
         
         # Validate and compute discount amount if needed
@@ -237,43 +247,57 @@ Return only valid JSON matching this schema:
         """Extract items from a line using regex"""
         items = []
         line_lower = line.lower()
-        
-        # Pattern: [quantity] [size] [flavor]
-        pattern = r'(\d+|' + '|'.join(self.filipino_numbers.keys()) + r')\s*(?:x\s*)?(?:(pouch|tub|maliit|malaki|100g|200g)\s+)?([a-z\s]+)'
-        
-        matches = re.findall(pattern, line_lower)
-        
-        for match in matches:
-            quantity_str, size_hint, flavor_text = match
-            
-            # Convert quantity
-            if quantity_str.isdigit():
-                quantity = int(quantity_str)
-            else:
-                quantity = self.filipino_numbers.get(quantity_str, 1)
-            
-            # Determine flavor
-            flavor_code = None
-            for alias, code in self.flavor_aliases.items():
-                if alias in flavor_text:
-                    flavor_code = code
-                    break
-            
-            if not flavor_code:
-                continue
-            
-            # Determine size
-            size_prefix = 'P'  # Default to pouch
-            if size_hint:
-                for indicator, prefix in self.size_indicators.items():
-                    if indicator in size_hint:
-                        size_prefix = prefix
+
+        # Remove phone numbers first (11 digits starting with 09)
+        line_lower = re.sub(r'\b09\d{9}\b', '', line_lower)
+
+        # Look for specific patterns like "one tub of cheese", "two pouches of bbq", etc.
+        # Pattern: [quantity] [size] of [flavor] OR [quantity] [size] [flavor]
+        patterns = [
+            r'(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(tub|pouch|maliit|malaki|100g|200g)\s+(?:of\s+)?([a-z\s]+)',
+            r'(\d+|' + '|'.join(self.filipino_numbers.keys()) + r')\s*(?:x\s*)?(?:(pouch|tub|maliit|malaki|100g|200g)\s+)?([a-z\s]+)'
+        ]
+
+        # Convert text numbers to digits
+        text_to_num = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+                       'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10}
+        text_to_num.update(self.filipino_numbers)
+
+        for pattern in patterns:
+            matches = re.findall(pattern, line_lower)
+
+            for match in matches:
+                quantity_str, size_hint, flavor_text = match
+
+                # Convert quantity
+                if quantity_str.isdigit():
+                    quantity = int(quantity_str)
+                else:
+                    quantity = text_to_num.get(quantity_str, 1)
+
+                # Determine flavor
+                flavor_code = None
+                for alias, code in self.flavor_aliases.items():
+                    if alias in flavor_text:
+                        flavor_code = code
                         break
-            
-            product_code = f"{size_prefix}-{flavor_code}"
-            if product_code in self.products:
-                items.append({"product_code": product_code, "quantity": quantity})
-        
+
+                if not flavor_code:
+                    continue
+
+                # Determine size
+                size_prefix = 'P'  # Default to pouch
+                if size_hint:
+                    for indicator, prefix in self.size_indicators.items():
+                        if indicator in size_hint:
+                            size_prefix = prefix
+                            break
+
+                product_code = f"{size_prefix}-{flavor_code}"
+                if product_code in self.products:
+                    items.append({"product_code": product_code, "quantity": quantity})
+                    break  # Found a match, move to next pattern
+
         return items
 
     def _validate_and_process(self, result: Dict[str, Any]) -> Dict[str, Any]:
