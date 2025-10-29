@@ -1,4 +1,5 @@
 import os
+import random
 from typing import Dict, Any
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
@@ -9,6 +10,30 @@ class OrderBot:
     def __init__(self):
         self.parser = OrderParser()
         self.sheets_client = GoogleSheetsClient()
+
+        # Random status messages
+        self.status_messages = [
+            "🫳 Smooshing...",
+            "📯 Honking...",
+            "🎒 Schlepping...",
+            "🍜 Noodling...",
+            "🤠 Moseying...",
+            "🔧 Puttering...",
+            "🌽 Shucking...",
+            "🎭 Finagling...",
+            "🧈 Churning...",
+            "🐑 Herding...",
+            "☕ Percolating...",
+            "🥘 Marinating...",
+            "✨ Vibing...",
+            "🕸️ Reticulating...",
+            "🥚 Hatching...",
+            "🪄 Conjuring...",
+            "💭 Musing...",
+            "🤔 Mulling...",
+            "🧠 Cogitating...",
+            "🤖 Clauding..."
+        ]
         
         # Product catalog for price lookups
         self.products = {
@@ -65,8 +90,9 @@ Just paste your orders and let me handle the rest! 🚀
         user_message = update.message.text
         
         try:
-            # Show processing message
-            processing_msg = await update.message.reply_text("🔄 Processing your order...")
+            # Show random processing message
+            random_message = random.choice(self.status_messages)
+            processing_msg = await update.message.reply_text(random_message)
             
             # Parse the order
             parsed_order = self.parser.parse_order(user_message)
