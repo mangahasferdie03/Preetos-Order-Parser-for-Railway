@@ -143,7 +143,7 @@ Return only valid JSON matching this schema:
 }}"""
 
         response = self.anthropic_client.messages.create(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-3-5-haiku-20241022",
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}]
         )
